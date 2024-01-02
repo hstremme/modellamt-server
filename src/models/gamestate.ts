@@ -1,11 +1,24 @@
 import mongoose from 'mongoose';
 
 const gameStateSchema = new mongoose.Schema({
-    budget: Number,
-    time: Number,
-    ressources: Map,
-    scenario: Number
+    budget: {
+        type: Number,
+        required: true
+    },
+    time: {
+        type: Number,
+        required: true
+    },
+    ressources: {
+        type: Map,
+        of: Number,
+        required: true
+    },
+    scenario: { 
+        type: Number,
+        required: true
+    }
 });
 
-export const GameState = new mongoose.Model('GameState', gameStateSchema);
+export const GameState = mongoose.model('GameState', gameStateSchema);
 

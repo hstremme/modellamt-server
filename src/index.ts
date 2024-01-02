@@ -1,7 +1,11 @@
-import { connectDb } from "./dbconfig.js";
 import express from 'express';
+import bodyParser from 'body-parser';
+import { connectDb } from "./dbconfig.js";
+import { api } from './api.js';
 
 const app = express();
+app.use(bodyParser.json());
+app.use(api);
 
 await connectDb;
 
