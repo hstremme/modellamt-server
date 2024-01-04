@@ -1,6 +1,7 @@
 import express from 'express';
 import { Ressource } from './models/ressource.js'
 import { GameState } from './models/gamestate.js'
+import { Scenario } from './models/scenario.js';
 
 const router = express.Router();
 
@@ -10,8 +11,15 @@ router.post('/ressource', async (req: express.Request, res: express.Response) =>
         res.status(400).send('Parameters missing.');
         return;
     }
-    const ressource = await Ressource.findById(req.query.resId);
-    const gameState = await GameState.findById(req.query.gameId);
+    var ressource: any;
+    var gameState: any;
+    try {
+        ressource = await Ressource.findById(req.query.resId);
+        gameState = await GameState.findById(req.query.gameId);
+    } catch (e) {
+        res.status(500).send('db query failed: ' + e);
+        return;
+    }
     if (ressource == null || gameState == null){
         res.status(400).send('DB entry not found.');
         return;
@@ -48,8 +56,15 @@ router.delete('/ressource', async (req: express.Request, res: express.Response) 
         res.status(400).send('Parameters missing.');
         return;
     }
-    const ressource = await Ressource.findById(req.query.resId);
-    const gameState = await GameState.findById(req.query.gameId);
+    var ressource: any;
+    var gameState: any;
+    try {
+        ressource = await Ressource.findById(req.query.resId);
+        gameState = await GameState.findById(req.query.gameId);
+    } catch (e) {
+        res.status(500).send('db query failed: ' + e);
+        return;
+    }
     if (ressource == null || gameState == null){
         res.status(400).send('DB entry not found.');
         return;
@@ -91,6 +106,41 @@ router.get('/gamestate', async (req: express.Request, res: express.Response) => 
         res.status(200).send(gameState);
     } catch (e) {
         res.status(500).send('DB Query failed: ' + e);
+    }
+});
+
+
+router.get('/ressource', async (req: express.Request, res: express.Response) => {
+    if (!req.query.resId) {
+        res.status(400).send('Parameter missing.');
+        return;
+    }
+    try {
+        const ressource = await Ressource.findById(req.query.resId);
+        if (ressource == null){
+            res.status(400).send('Entry not found');
+            return;
+        }
+        res.status(200).send(ressource);
+    } catch (e) {
+        res.status(500).send("DB query failed: " + e);
+    }
+});
+
+router.get('/scenario', async (req: express.Request, res: express.Response) => {
+    if (!req.query.scenId) {
+        res.status(400).send('Parameter missing.');
+        return;
+    }
+    try {
+        const scenario = await Scenario.findById(req.query.scenId);
+        if (scenario == null){
+            res.status(400).send('Entry not found');
+            return;
+        }
+        res.status(200).send(scenario);
+    } catch (e) {
+        res.status(500).send("DB query failed: " + e);
     }
 });
 
