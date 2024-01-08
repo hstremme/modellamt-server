@@ -1,6 +1,10 @@
 import mongoose from 'mongoose';
 
 const scenarioSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        required: true
+    },
     budget: {
         type: Number,
         required: true

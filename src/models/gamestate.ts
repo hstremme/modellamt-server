@@ -15,7 +15,7 @@ const gameStateSchema = new mongoose.Schema({
         required: true
     },
     scenario: { 
-        type: Number,
+        type: String,
         required: true
     }
 });
