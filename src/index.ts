@@ -1,7 +1,7 @@
-import express from 'express';
-import bodyParser from 'body-parser';
+import express from "express";
+import bodyParser from "body-parser";
 import { connectDb } from "./dbconfig.js";
-import { api } from './api.js';
+import { api } from "./api.js";
 
 const app = express();
 app.use(bodyParser.json());
@@ -10,5 +10,5 @@ app.use(api);
 await connectDb;
 
 app.listen(process.env.PORT, () => {
-    console.log(`Server started on port ${process.env.PORT}`)
+  console.log(`Server started on port ${process.env.PORT}`);
 });

@@ -1,158 +1,172 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import { Ressource } from './models/ressource.js'
-import { GameState } from './models/gamestate.js'
-import { Scenario } from './models/scenario.js';
+import express from "express";
+import mongoose from "mongoose";
+import { Ressource } from "./models/ressource.js";
+import { GameState } from "./models/gamestate.js";
+import { Scenario } from "./models/scenario.js";
 
 const router = express.Router();
 
 // TODO change to post, possibly using body instead of query (cookie for gamestate)
-router.post('/ressource', async (req: express.Request, res: express.Response) => {
-    if (!req.query.resId || !req.query.gameId ) {
-        res.status(400).send('Parameters missing.');
-        return;
+router.post(
+  "/ressource",
+  async (req: express.Request, res: express.Response) => {
+    if (!req.query.resId || !req.query.gameId) {
+      res.status(400).send("Parameters missing.");
+      return;
     }
     var ressource: any;
     var gameState: any;
     try {
-        ressource = await Ressource.findById(req.query.resId);
-        gameState = await GameState.findById(req.query.gameId);
+      ressource = await Ressource.findById(req.query.resId);
+      gameState = await GameState.findById(req.query.gameId);
     } catch (e) {
-        res.status(500).send('db query failed: ' + e);
-        return;
+      res.status(500).send("db query failed: " + e);
+      return;
     }
-    if (ressource == null || gameState == null){
-        res.status(400).send('DB entry not found.');
-        return;
+    if (ressource == null || gameState == null) {
+      res.status(400).send("DB entry not found.");
+      return;
     }
     // Checks if the Ressource can be expanded
-    if (!ressource.isExpandable && gameState.ressources.get(ressource.name)! > 0){
-       res.status(500).send('Ressource not expandable.');
-       return;
+    if (
+      !ressource.isExpandable &&
+      gameState.ressources.get(ressource.name)! > 0
+    ) {
+      res.status(500).send("Ressource not expandable.");
+      return;
     }
     const newBudget = gameState.budget - ressource.price;
     const newTime = gameState.time - ressource.baseTime;
-    if (newBudget <= 0){
-        res.status(500).send('Not enough budget.');
-        return;
+    if (newBudget <= 0) {
+      res.status(500).send("Not enough budget.");
+      return;
     }
     try {
-        const filter = { '_id': req.query.gameId as string};
-        await GameState.updateOne( filter,{ 
-            budget: newBudget,
-            time: newTime,
-            $set: {
-                [`ressources.${ressource.name}`]: gameState.ressources.get(ressource.name)! + 1
-            }
-        });
+      const filter = { _id: req.query.gameId as string };
+      await GameState.updateOne(filter, {
+        budget: newBudget,
+        time: newTime,
+        $set: {
+          [`ressources.${ressource.name}`]:
+            gameState.ressources.get(ressource.name)! + 1,
+        },
+      });
     } catch (e: any) {
-        res.status(500).send('Updating GameState failed: ' + e);
-        return;
+      res.status(500).send("Updating GameState failed: " + e);
+      return;
     }
-    res.status(200).send({newBudget});
-});
+    res.status(200).send({ newBudget });
+  },
+);
 
-router.delete('/ressource', async (req: express.Request, res: express.Response) => {
-    if (!req.query.resId || !req.query.gameId ) {
-        res.status(400).send('Parameters missing.');
-        return;
+router.delete(
+  "/ressource",
+  async (req: express.Request, res: express.Response) => {
+    if (!req.query.resId || !req.query.gameId) {
+      res.status(400).send("Parameters missing.");
+      return;
     }
     var ressource: any;
     var gameState: any;
     try {
-        ressource = await Ressource.findById(req.query.resId);
-        gameState = await GameState.findById(req.query.gameId);
+      ressource = await Ressource.findById(req.query.resId);
+      gameState = await GameState.findById(req.query.gameId);
     } catch (e) {
-        res.status(500).send('db query failed: ' + e);
-        return;
+      res.status(500).send("db query failed: " + e);
+      return;
     }
-    if (ressource == null || gameState == null){
-        res.status(400).send('DB entry not found.');
-        return;
+    if (ressource == null || gameState == null) {
+      res.status(400).send("DB entry not found.");
+      return;
     }
     // Checks if the Ressource can be expanded
-    if (gameState.ressources.get(ressource.name)! < 1){
-       res.status(500).send('Ressource not existing.');
-       return;
+    if (gameState.ressources.get(ressource.name)! < 1) {
+      res.status(500).send("Ressource not existing.");
+      return;
     }
     const newBudget = gameState.budget + ressource.price;
     const newTime = gameState.time + ressource.baseTime;
     try {
-        const filter = { '_id': req.query.gameId as string};
-        await GameState.updateOne( filter,{ 
-            budget: newBudget,
-            time: newTime,
-            $set: {
-                [`ressources.${ressource.name}`]: gameState.ressources.get(ressource.name)! - 1
-            }
-        });
+      const filter = { _id: req.query.gameId as string };
+      await GameState.updateOne(filter, {
+        budget: newBudget,
+        time: newTime,
+        $set: {
+          [`ressources.${ressource.name}`]:
+            gameState.ressources.get(ressource.name)! - 1,
+        },
+      });
     } catch (e: any) {
-        res.status(500).send('Updating GameState failed: ' + e);
-        return;
+      res.status(500).send("Updating GameState failed: " + e);
+      return;
     }
-    res.status(200).send({newBudget});
-});
+    res.status(200).send({ newBudget });
+  },
+);
 
-router.get(['/scenario', '/ressource', '/gamestate'], async (req: express.Request, res: express.Response) => {
+router.get(
+  ["/scenario", "/ressource", "/gamestate"],
+  async (req: express.Request, res: express.Response) => {
     if (!req.query.scenId && !req.query.resId && !req.query.gameId) {
-        res.status(400).send('Parameter missing.');
-        return;
+      res.status(400).send("Parameter missing.");
+      return;
     }
     try {
-        var entry: any;
-        const path = req.url.split('?')[0];
-        switch(path) {
-            case '/scenario':
-                entry = await Scenario.findById(req.query.scenId);
-                break;
-            case '/ressource':
-                entry = await Ressource.findById(req.query.resId);
-                break;
-            case '/gamestate':
-                entry = await GameState.findById(req.query.gameId);
-                break;
-        }
-        if (entry == null){
-            res.status(400).send('Entry not found');
-            return;
-        }
-        res.status(200).send(entry);
+      var entry: any;
+      const path = req.url.split("?")[0];
+      switch (path) {
+        case "/scenario":
+          entry = await Scenario.findById(req.query.scenId);
+          break;
+        case "/ressource":
+          entry = await Ressource.findById(req.query.resId);
+          break;
+        case "/gamestate":
+          entry = await GameState.findById(req.query.gameId);
+          break;
+      }
+      if (entry == null) {
+        res.status(400).send("Entry not found");
+        return;
+      }
+      res.status(200).send(entry);
     } catch (e) {
-        res.status(500).send("DB query failed: " + e);
+      res.status(500).send("DB query failed: " + e);
     }
-});
+  },
+);
 
-router.post('/init', async (req: express.Request, res: express.Response) => {
-    const scenName = req.query.scenario;
-    if (!scenName) {
-        res.status(400).send('Params missing.');
-        return;
+router.post("/init", async (req: express.Request, res: express.Response) => {
+  const scenName = req.query.scenario;
+  if (!scenName) {
+    res.status(400).send("Params missing.");
+    return;
+  }
+  try {
+    const scenario = await Scenario.findOne({ name: scenName });
+    if (scenario == null) {
+      res.status(500).send("Entry not found");
+      return;
     }
-    try {
-        const scenario = await Scenario.findOne({name: scenName});
-        if (scenario == null){
-            res.status(500).send('Entry not found');
-            return;
-        }
-        const id = new mongoose.Types.ObjectId();
-        console.log(id)
-        const gameState = new GameState({
-            _id: id,
-            budget: scenario.budget,
-            time: scenario.time,
-            ressources: {
-                'Mitarbeiter': 0,
-                'ScanStrecke': 0,
-                'FrontOffice': 0
-            },
-            scenario: scenName
-        });
-        await gameState.save();
-        res.cookie('gameId', id);
-        res.status(200).send();
-    } catch (e) {
-        res.status(500).send('db query failed: ' + e);
-    }
+    const id = new mongoose.Types.ObjectId();
+    console.log(id);
+    const gameState = new GameState({
+      _id: id,
+      budget: scenario.budget,
+      time: scenario.time,
+      ressources: {
+        Mitarbeiter: 0,
+        ScanStrecke: 0,
+        FrontOffice: 0,
+      },
+      scenario: scenName,
+    });
+    await gameState.save();
+    res.cookie("gameId", id);
+    res.status(200).send();
+  } catch (e) {
+    res.status(500).send("db query failed: " + e);
+  }
 });
 
 export { router as api };
