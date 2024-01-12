@@ -149,7 +149,6 @@ router.post("/init", async (req: express.Request, res: express.Response) => {
       return;
     }
     const id = new mongoose.Types.ObjectId();
-    console.log(id);
     const gameState = new GameState({
       _id: id,
       budget: scenario.budget,
@@ -162,7 +161,7 @@ router.post("/init", async (req: express.Request, res: express.Response) => {
       scenario: scenName,
     });
     await gameState.save();
-    res.cookie("gameId", id);
+    res.cookie("gameId", id.toString());
     res.status(200).send();
   } catch (e) {
     res.status(500).send("db query failed: " + e);
