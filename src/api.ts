@@ -10,15 +10,17 @@ const router = express.Router();
 router.post(
   "/ressource",
   async (req: express.Request, res: express.Response) => {
-    if (!req.query.resId || !req.query.gameId) {
+    const ressourceId = req.query.resId;
+    const gameId = req.cookies["gameId"];
+    if (!ressourceId || !gameId) {
       res.status(400).send("Parameters missing.");
       return;
     }
     var ressource: any;
     var gameState: any;
     try {
-      ressource = await Ressource.findById(req.query.resId);
-      gameState = await GameState.findById(req.query.gameId);
+      ressource = await Ressource.findById(ressourceId);
+      gameState = await GameState.findById(gameId);
     } catch (e) {
       res.status(500).send("db query failed: " + e);
       return;
@@ -32,17 +34,17 @@ router.post(
       !ressource.isExpandable &&
       gameState.ressources.get(ressource.name)! > 0
     ) {
-      res.status(500).send("Ressource not expandable.");
+      res.status(240).send("Ressource not expandable.");
       return;
     }
     const newBudget = gameState.budget - ressource.price;
     const newTime = gameState.time - ressource.baseTime;
     if (newBudget <= 0) {
-      res.status(500).send("Not enough budget.");
+      res.status(250).send("Not enough budget.");
       return;
     }
     try {
-      const filter = { _id: req.query.gameId as string };
+      const filter = { _id: gameId as string };
       await GameState.updateOne(filter, {
         budget: newBudget,
         time: newTime,
@@ -62,15 +64,17 @@ router.post(
 router.delete(
   "/ressource",
   async (req: express.Request, res: express.Response) => {
-    if (!req.query.resId || !req.query.gameId) {
+    const ressourceId = req.query.resId;
+    const gameId = req.cookies["gameId"];
+    if (!ressourceId || !gameId) {
       res.status(400).send("Parameters missing.");
       return;
     }
     var ressource: any;
     var gameState: any;
     try {
-      ressource = await Ressource.findById(req.query.resId);
-      gameState = await GameState.findById(req.query.gameId);
+      ressource = await Ressource.findById(ressourceId);
+      gameState = await GameState.findById(gameId);
     } catch (e) {
       res.status(500).send("db query failed: " + e);
       return;
@@ -81,13 +85,13 @@ router.delete(
     }
     // Checks if the Ressource can be expanded
     if (gameState.ressources.get(ressource.name)! < 1) {
-      res.status(500).send("Ressource not existing.");
+      res.status(240).send("Ressource not existing.");
       return;
     }
     const newBudget = gameState.budget + ressource.price;
     const newTime = gameState.time + ressource.baseTime;
     try {
-      const filter = { _id: req.query.gameId as string };
+      const filter = { _id: gameId as string };
       await GameState.updateOne(filter, {
         budget: newBudget,
         time: newTime,
@@ -107,7 +111,10 @@ router.delete(
 router.get(
   ["/scenario", "/ressource", "/gamestate"],
   async (req: express.Request, res: express.Response) => {
-    if (!req.query.scenId && !req.query.resId && !req.query.gameId) {
+    const scenName = req.query.scenario;
+    const ressourceId = req.query.resId;
+    const gameId = req.cookies["gameId"];
+    if (!scenName && !ressourceId && !gameId) {
       res.status(400).send("Parameter missing.");
       return;
     }
@@ -116,13 +123,13 @@ router.get(
       const path = req.url.split("?")[0];
       switch (path) {
         case "/scenario":
-          entry = await Scenario.findById(req.query.scenId);
+          entry = await Scenario.findOne({ name: scenName });
           break;
         case "/ressource":
-          entry = await Ressource.findById(req.query.resId);
+          entry = await Ressource.findById(ressourceId);
           break;
         case "/gamestate":
-          entry = await GameState.findById(req.query.gameId);
+          entry = await GameState.findById(gameId);
           break;
       }
       if (entry == null) {
@@ -162,7 +169,7 @@ router.post("/init", async (req: express.Request, res: express.Response) => {
     });
     await gameState.save();
     res.cookie("gameId", id.toString());
-    res.status(200).send();
+    res.status(200).send({ budget: scenario.budget, time: scenario.time });
   } catch (e) {
     res.status(500).send("db query failed: " + e);
   }
