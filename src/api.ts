@@ -143,6 +143,22 @@ router.get(
   },
 );
 
+router.get(
+  "/scenarios",
+  async (req: express.Request, res: express.Response) => {
+    try {
+      var entries = await Scenario.find();
+      if (entries == null) {
+        res.status(400).send("No Scnearios available");
+        return;
+      }
+      res.status(200).send(entries);
+    } catch (e) {
+      res.status(500).send(`DB query failed: ${e}`);
+    }
+  },
+);
+
 router.post("/init", async (req: express.Request, res: express.Response) => {
   const scenName = req.query.scenario;
   if (!scenName) {
