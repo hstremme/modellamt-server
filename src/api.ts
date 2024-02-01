@@ -167,6 +167,7 @@ router.post("/init", async (req: express.Request, res: express.Response) => {
   }
   try {
     const scenario = await Scenario.findOne({ name: scenName });
+    const ressources = await Ressource.find();
     if (scenario == null) {
       res.status(500).send("Entry not found");
       return;
@@ -176,12 +177,11 @@ router.post("/init", async (req: express.Request, res: express.Response) => {
       _id: id,
       budget: scenario.budget,
       time: scenario.time,
-      ressources: {
-        Mitarbeiter: 0,
-        ScanStrecke: 0,
-        FrontOffice: 0,
-      },
+      ressources: {},
       scenario: scenName,
+    });
+    ressources.forEach((ressource) => {
+      gameState.ressources.set(ressource.name, 0);
     });
     await gameState.save();
     res.cookie("gameId", id.toString());
