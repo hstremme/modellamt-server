@@ -191,4 +191,14 @@ router.post("/init", async (req: express.Request, res: express.Response) => {
   }
 });
 
+router.delete("/gamestate", async (req: express.Request, res: express.Response) => {
+  const gameId = req.cookies['gameId'];
+  if (!gameId) {
+    res.status(400).send("Params missing.");
+  }
+  GameState.findByIdAndDelete(gameId)
+  .then(() => res.status(200).send())
+  .catch((e) => res.status(500).send(e))
+});
+
 export { router as api };
