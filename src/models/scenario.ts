@@ -17,6 +17,10 @@ const scenarioSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  count: {
+    type: Number,
+    required: true,
+  },
 });
 
 export const Scenario = mongoose.model("Scenario", scenarioSchema);

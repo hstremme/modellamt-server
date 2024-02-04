@@ -32,7 +32,7 @@ router.post(
     // Checks if the Ressource can be expanded
     if (
       !ressource.isExpandable &&
-      gameState.ressources.get(ressource.name)! > 0
+      gameState.ressources.get(ressource._id.toString())! > 0
     ) {
       res.status(240).send("Ressource not expandable.");
       return;
@@ -49,15 +49,15 @@ router.post(
         budget: newBudget,
         time: newTime,
         $set: {
-          [`ressources.${ressource.name}`]:
-            gameState.ressources.get(ressource.name)! + 1,
+          [`ressources.${ressource._id.toString()}`]:
+            gameState.ressources.get(ressource._id.toString())! + 1,
         },
       });
     } catch (e: any) {
       res.status(500).send("Updating GameState failed: " + e);
       return;
     }
-    res.status(200).send({ newBudget });
+    res.status(200).send({ newBudget, newTime });
   },
 );
 
@@ -84,7 +84,7 @@ router.delete(
       return;
     }
     // Checks if the Ressource can be expanded
-    if (gameState.ressources.get(ressource.name)! < 1) {
+    if (gameState.ressources.get(ressource._id.toString())! < 1) {
       res.status(240).send("Ressource not existing.");
       return;
     }
@@ -96,15 +96,15 @@ router.delete(
         budget: newBudget,
         time: newTime,
         $set: {
-          [`ressources.${ressource.name}`]:
-            gameState.ressources.get(ressource.name)! - 1,
+          [`ressources.${ressource._id.toString()}`]:
+            gameState.ressources.get(ressource._id.toString())! - 1,
         },
       });
     } catch (e: any) {
       res.status(500).send("Updating GameState failed: " + e);
       return;
     }
-    res.status(200).send({ newBudget });
+    res.status(200).send({ newBudget, newTime });
   },
 );
 
@@ -167,6 +167,7 @@ router.post("/init", async (req: express.Request, res: express.Response) => {
   }
   try {
     const scenario = await Scenario.findOne({ name: scenName });
+    const ressources = await Ressource.find();
     if (scenario == null) {
       res.status(500).send("Entry not found");
       return;
@@ -176,12 +177,11 @@ router.post("/init", async (req: express.Request, res: express.Response) => {
       _id: id,
       budget: scenario.budget,
       time: scenario.time,
-      ressources: {
-        Mitarbeiter: 0,
-        ScanStrecke: 0,
-        FrontOffice: 0,
-      },
+      ressources: {},
       scenario: scenName,
+    });
+    ressources.forEach((ressource) => {
+      gameState.ressources.set(ressource._id.toString(), 0);
     });
     await gameState.save();
     res.cookie("gameId", id.toString());
