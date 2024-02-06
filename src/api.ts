@@ -186,7 +186,8 @@ router.post("/init", async (req: express.Request, res: express.Response) => {
     await gameState.save();
     res.cookie("gameId", id.toString(), {
       secure: true,
-      sameSite: "none"
+      sameSite: "none",
+      path: "/"
     });
     res.status(200).send({ budget: scenario.budget, time: scenario.time });
   } catch (e) {
