@@ -184,7 +184,10 @@ router.post("/init", async (req: express.Request, res: express.Response) => {
       gameState.ressources.set(ressource._id.toString(), 0);
     });
     await gameState.save();
-    res.cookie("gameId", id.toString());
+    res.cookie("gameId", id.toString(), {
+      secure: true,
+      sameSite: "none"
+    });
     res.status(200).send({ budget: scenario.budget, time: scenario.time });
   } catch (e) {
     res.status(500).send("db query failed: " + e);
